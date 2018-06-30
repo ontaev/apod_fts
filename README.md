@@ -1,3 +1,7 @@
+PostgreSQL full text search project for kalmyk language
+Forked from postgrespro/apod_fts
+
+
 [![Postgres Professional](static/PGpro-logo.png)](https://postgrespro.com/)
 
 # apod_fts
