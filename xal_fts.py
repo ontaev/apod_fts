@@ -6,13 +6,16 @@ import psycopg2.extras
 from psycopg2 import ProgrammingError
 from flask import Flask, request, g, abort, render_template, escape
 
-# create our apod application
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
+
+# create our xal_fts application
 app = Flask(__name__)
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
     SECRET_KEY='development-key',
-    DATABASE = 'apod',
+    DATABASE = 'xal_fts',
     HOST = 'localhost',
     PORT = 5432
 ))
@@ -46,9 +49,9 @@ def show_entries():
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    cur.execute('SELECT msg_id, title, lang, date::date, text FROM apod ORDER BY date DESC LIMIT 10')
+    cur.execute('SELECT msg_id, title, lang, date::date, text FROM articles ORDER BY date DESC LIMIT 10')
     entries = cur.fetchall()
-    return render_template('show_apods.html', entries=entries)
+    return render_template('show_articles.html', entries=entries)
 
 @app.route('/search', methods=['GET'])
 def search():
@@ -74,9 +77,9 @@ def search():
                 "       ORDER BY {0}, msg_id \n"
                 "   ) AS rank, \n"
                 "   COUNT(*) OVER (PARTITION BY name) cnt \n"
-                "   FROM apod \n"
-                "   LEFT JOIN sections AS sects on sect_id = ANY(apod.sections) \n"
-                "   WHERE fts @@ to_tsquery('apod_conf', %(pat)s) \n"
+                "   FROM articles \n"
+                "   LEFT JOIN sections AS sects on sect_id = ANY(xal_fts.sections) \n"
+                "   WHERE fts @@ to_tsquery('xal_fts_conf', %(pat)s) \n"
                 " ),\n"
                 " lst AS (SELECT \n"
                 "   name, \n"
@@ -95,26 +98,27 @@ def search():
                 " FROM lst \n")
     else:
         query = ("SELECT msg_id, title, lang, date, \n"
-                "  ts_headline('apod_conf', text, ts_q) AS text \n"
+                "  ts_headline('xal_fts_conf', text, ts_q) AS text \n"
                 " FROM (SELECT msg_id, title, lang, date::date, text, \n"
-                "       to_tsquery('apod_conf', %(pat)s) AS ts_q \n"
-                "       FROM apod \n"
-                "       WHERE fts @@ to_tsquery('apod_conf', %(pat)s) \n"
+                "       to_tsquery('xal_fts_conf', %(pat)s) AS ts_q \n"
+                "       FROM articles \n"
+                "       WHERE fts @@ to_tsquery('xal_fts_conf', %(pat)s) \n"
                 "       ORDER BY {0} \n"
                 "       LIMIT 10) AS entries")
 
     if order == 'rank':
         if rank_func == 'ts_rank':
-            query = query.format("ts_rank(fts, to_tsquery('apod_conf', %(pat)s)) DESC")
+            query = query.format("ts_rank(fts, to_tsquery('xal_fts_conf', %(pat)s)) DESC")
         elif rank_func == 'ts_rank_cd':
-            query = query.format("ts_rank_cd(fts, to_tsquery('apod_conf', %(pat)s)) DESC")
+            query = query.format("ts_rank_cd(fts, to_tsquery('xal_fts_conf', %(pat)s)) DESC")
         else:
-            query = query.format("fts <=> to_tsquery('apod_conf', %(pat)s)")
+            query = query.format("fts <=> to_tsquery('xal_fts_conf', %(pat)s)")
     else:
         query = query.format("date DESC")
 
     # Prepare the query
     query_text = cur.mogrify(query, {"pat": request.args['pattern']})
+    
 
     entries = None
     hints = None
@@ -141,11 +145,12 @@ def search():
             hints = cur.fetchall()
     except ProgrammingError as e:
         error = e.pgerror
+        error = error.decode('utf-8')
 
     query_text = query_text.decode('utf-8')
 
     return render_template(
-        'show_apods.html',
+        'show_articles.html',
         order=order,
         rank_func=rank_func,
         faceted=faceted,
@@ -156,20 +161,20 @@ def search():
         query_text=escape(query_text),
         query_time=query_time)
 
-@app.route('/apod/<int:apod_id>/<lang>')
-def show_apod(apod_id, lang):
+@app.route('/article/<int:article_id>/<lang>')
+def show_article(article_id, lang):
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     query = ("SELECT title, date::date, text "
-            " FROM apod WHERE msg_id = %s AND lang = %s")
+            " FROM articles WHERE msg_id = %s AND lang = %s")
 
-    cur.execute(query, [apod_id, lang])
+    cur.execute(query, [article_id, lang])
 
     if cur.rowcount == 0:
         abort(404)
 
     entry = cur.fetchone()
     return render_template(
-        'show_apod.html',
+        'show_article.html',
         entry=entry)
