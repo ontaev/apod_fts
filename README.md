@@ -15,8 +15,10 @@ PostgreSQL 9.6.
 `xal_fts` is a web-application written in Python using flask web-framework. To run this application
 you need to install `Flask` and `psycopg2` Python packages.
 
-It is necessary that PostgreSQL binaries are in PATH environment. To install all text search dictionaries and RUM index you can use scripts in script directory. Use the following commands
-You should have snowball kalmyk dictionary. Source code you can get from [kalmyk-stemmer project](https://github.com/ontaev/kalmyk-stemmer)  
+It is necessary that PostgreSQL binaries are in PATH environment. To install all text search dictionaries and RUM index you can use scripts in script directory.
+You should have snowball kalmyk dictionary. Source code you can get from [kalmyk-stemmer project](https://github.com/ontaev/kalmyk-stemmer) 
+
+Use the following commands 
 
 ```
 => cd xal_fts
