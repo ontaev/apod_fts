@@ -1,4 +1,5 @@
 PostgreSQL full text search project for [kalmyk](https://en.wikipedia.org/wiki/Kalmyk_Oirat) language 
+
 Forked from https://github.com/postgrespro/apod_fts
 
 
@@ -15,11 +16,14 @@ PostgreSQL 9.6.
 you need to install `Flask` and `psycopg2` Python packages.
 
 It is necessary that PostgreSQL binaries are in PATH environment. To install all text search dictionaries and RUM index you can use scripts in script directory. Use the following commands
+You should have snowball kalmyk dictionary. Source code you can get from [kalmyk-stemmer project](https://github.com/ontaev/kalmyk-stemmer)  
 
 ```
 => cd xal_fts
 => createdb xal_fts
 => psql xal_fts < scripts/xal_fts.dump
+=> chmod +x scripts/00-create-stemmer.sh
+=> scripts/00-create-stemmer.sh
 => chmod +x scripts/01-create-configuration.sh
 => scripts/01-create-configuration.sh
 => chmod +x scripts/02-create-rum.sh
