@@ -78,7 +78,7 @@ def search():
                 "   ) AS rank, \n"
                 "   COUNT(*) OVER (PARTITION BY name) cnt \n"
                 "   FROM articles \n"
-                "   LEFT JOIN sections AS sects on sect_id = ANY(xal_fts.sections) \n"
+                "   LEFT JOIN sections AS sects on sect_id = ANY(articles.sections) \n"
                 "   WHERE fts @@ to_tsquery('xal_fts_conf', %(pat)s) \n"
                 " ),\n"
                 " lst AS (SELECT \n"
